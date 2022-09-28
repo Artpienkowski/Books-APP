@@ -6,6 +6,7 @@
     const select = {
         templateOf: {
             books: '#template-book',
+            filters: '.filters',
         },
 
         listOf: {
@@ -18,7 +19,9 @@
 
         imageParams: {
             id: '.book-id'
-        }
+        },
+
+        
     };
 
     const templates = {
@@ -32,6 +35,13 @@
         /* make a loop for each book from dataSource.books */
         for(const eachBook of dataSource.books){
             
+            /* add const ratingBgc and rangeWidth */
+            const ratingBgc =  determineRatingBgc(eachBook.rating);
+            eachBook.ratingBgc = ratingBgc;
+
+            const ratingWidth = eachBook.ratingBgc * 10;
+            eachBook.ratingWidth = ratingWidth;
+
             /* generate HTML for each book based on template */
             const generatedHTML = templates.bookTemplate(eachBook);
             
@@ -48,41 +58,124 @@
 
     render();
   
- 
+    
 
     /* write a function initActions to add a book to a favorite list */
     function initActions(){
-
         /* make an empty array with favorite books */
         const favoriteBooks = [];
+        
+        
+        /* make a const with reference to entire list of images */
+        const imageListContainer = document.querySelector(select.listOf.booklist);
 
-        /* make a const with reference to entire image list */
-        const imageContainer = document.querySelectorAll(select.containerOf.image);
+        /* add event listener to the entire list of images */
+        imageListContainer.addEventListener('dblclick', function(event){
+            event.preventDefault();
 
-        /* make loop for every image */
-        for(const image of imageContainer){
-
-            /* add event listener to every image */
-            image.addEventListener('dblclick', function(event){
-                event.preventDefault();
+            /* check if offset Parent of the image contains class .book_image) */
+            if(event.target.offsetParent.classList.contains('book__image')){
 
                 /* find clickedElement */
-                const clickedElement = this;
-
-                /* add favorite to clickedelement */
-                clickedElement.classList.add('favorite');
+                const clickedElement = event.target.offsetParent;
 
                 /* find const with data-id of the image */
                 const bookID = clickedElement.getAttribute('data-id');
 
+                if(!favoriteBooks.includes(bookID)){
+
+                /* add favorite to clicked element */
+                clickedElement.classList.add('favorite');
+                    
                 /* push this book to the favorite books array */
                 favoriteBooks.push(bookID);
+
+                /* if it's alreayd in the array */
+                }else if(favoriteBooks.includes(bookID)){
+
+                    /* remove class favorite */
+                    clickedElement.classList.remove('favorite');
+
+                     /* remove bookID from the array */
+                    const indexOfBookId = favoriteBooks.indexOf(bookID);
+                    favoriteBooks.splice(indexOfBookId, 1);
+                }
+            }
+        });
         
-            });
-        }    
+        
+        /* make a reference to the filter form */ 
+        const filterContainer = document.querySelector(select.templateOf.filters);
+
+        /* add events listener to the form */
+        filterContainer.addEventListener('click', function(event){
+            /* find const of clickedElement */
+            const clickedElement = event.target;
+
+            /* check if it's a checkbox that was clicked in the whole filters container - event.target */
+            if(event.target.tagName === 'INPUT' && event.target.type === 'checkbox' && event.target.name === 'filter'){
+                
+                /* if checked - push it's value to array */
+                if(clickedElement.checked){
+                    filters.push(clickedElement.value)
+
+                /* if uncheckes - remove from array */
+                } else {
+                    const indexOfFilterID = filters.indexOf(clickedElement.value);
+                    filters.splice(indexOfFilterID, 1);
+                }
+            }
+            console.log(filters);
+            filterBooks();
+            
+        });
     };
 
     initActions();
+    const filters = [];
+
+    function filterBooks(){
+        
+        /*for every book */
+        for(const book of dataSource.books){
+            let shouldBeHidden = false;
+
+            /* for every book check if the filter fits the book */
+            for(const filter of filters){
+                if(!book.details[filter]){
+                    shouldBeHidden = true;
+                    break;
+                }
+            }
+
+            /* if the filter fits the book - hide it, if not - make it visible */
+            const bookImageID = document.querySelector(select.containerOf.image + '[data-id="' + book.id + '"]');
+            if(shouldBeHidden){
+                
+                bookImageID.classList.add('hidden');
+                }else{
+
+                bookImageID.classList.remove('hidden');
+            }
+        }
+    }
+
+    function determineRatingBgc(rating){
+
+        let background = '';
+    
+        /* prepare backgrounds for different ratings */
+        if(rating < 6){
+          background = 'linear-gradient(to bottom,  #fefcea 0%, #f1da36 100%)';
+        } else if(rating > 6 && rating <= 8){
+          background = 'linear-gradient(to bottom,  #b4df5b 0%,#b4df5b 100%)';
+        } else if(rating > 8 && rating <= 9){
+          background = 'linear-gradient(to bottom, #299a0b 0%, #299a0b 100%)';
+        } else if(rating > 9){
+          background = 'linear-gradient(to bottom, #ff0084 0%,#ff0084 100%)';
+        }
+        return background;
+      }
 
     
 }
